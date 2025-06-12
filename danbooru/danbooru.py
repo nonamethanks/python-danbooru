@@ -1,0 +1,101 @@
+"""Base session used throughout the module."""
+
+
+import os
+
+from backoff import expo, on_exception
+from loguru import logger
+from requests import Response, Session
+from requests.exceptions import ReadTimeout
+
+from danbooru.__version__ import package_version
+from danbooru.exceptions import CloudflareError, DownbooruError, raise_http_exception
+from danbooru.model import DanbooruModel, DanbooruModelType
+
+
+class Danbooru:
+    def __init__(self,
+                 base_url: str = os.getenv("DANBOORU_BASE_URL", "https://testbooru.donmai.us"),
+                 danbooru_username: str | None = os.getenv("DANBOORU_USERNAME"),
+                 danbooru_api_key: str | None = os.getenv("DANBOORU_API_KEY"),
+                 ) -> None:
+        """Initialize a Danbooru session with base URL and optional authentication."""
+        self.logger = logger
+
+        self.base_url = base_url.strip("/")
+        self.logger.trace(f"Setting base url: {base_url}")
+
+        self._session = Session()
+
+        if danbooru_username and danbooru_api_key:
+            self.logger.trace(f"Setting username: {danbooru_username}")
+            self._session.auth = (danbooru_username, danbooru_api_key)
+        else:
+            self.logger.trace("No username was configured. All requests will be anonymous.")
+
+        user_agent = f"DanbooruTools/{package_version} <username='{danbooru_username or ""}'>"
+        self._session.headers = {
+            "User-Agent": user_agent,
+            "Accept": "application/json",
+        }
+        self.logger.trace(f"Setting User Agent: {user_agent}.")
+
+    @on_exception(expo, (ReadTimeout, CloudflareError, DownbooruError), max_tries=5)
+    def danbooru_request(self, method: str, endpoint: str, **kwargs) -> list[DanbooruModelType] | list[DanbooruModel]:
+        """
+        Send a request to the Danbooru api. The **kwargs are automatically parsed to be compatible with Rails parameters.
+
+        For example, `danbooru_request("GET", "comments", id=1)` automatically converts the query params to ?search[id]=1.`
+        """
+        endpoint = endpoint.strip("/").removesuffix(".json")
+        if method == "GET":
+            if endpoint == "posts":
+                kwargs.setdefault("limit", 200)
+            elif endpoint != "counts/posts":
+                kwargs.setdefault("limit", 1000)
+            kwargs = self._kwargs_to_rails_params(**kwargs)
+            kwargs = {"params": kwargs}
+
+        endpoint_url = f"{self.base_url}/{endpoint}".strip("/")
+
+        response = self._session.request(method, endpoint_url, **kwargs)
+        self.logger.trace(f"Performed {method} request at {response.request.url}")
+        return self._parse_response(response, endpoint)
+
+    def _parse_response(self, response: Response, endpoint: str) -> list[DanbooruModelType] | list[DanbooruModel]:
+        if not response.ok:
+            raise_http_exception(response)
+
+        data = response.json()
+
+        if not isinstance(data, list):
+            msg = f"API returned unexpected type: {type(data)} => {data}"
+            raise TypeError(msg)
+        model = DanbooruModel.model_for_endpoint(endpoint)
+        return [model(**obj, session=self, response=response) for obj in data]
+
+    @classmethod
+    def _kwargs_to_rails_params(cls, **kwargs) -> dict:
+        """Turn kwargs into url parameters that Rails can understand."""
+        params = {}
+        for named_parameter in ["only", "page", "limit"]:
+            if n_p := kwargs.pop(named_parameter, None):
+                params[named_parameter] = n_p
+
+        for _key, _value in kwargs.items():
+            parsed_key = f"search[{_key}]"
+            for extra_key, parsed_value in cls._parse_to_include(_value):
+                params[parsed_key + extra_key] = parsed_value
+        return params
+
+    @classmethod
+    def _parse_to_include(cls, obj: str | dict) -> list[tuple[str, str]]:
+        if isinstance(obj, dict):
+            keys_and_values: list[tuple[str, str]] = []
+            for [_key, _val] in obj.items():
+                parsed_key = f"[{_key}]"
+                for extra_key, parsed_value in cls._parse_to_include(_val):
+                    keys_and_values.append((parsed_key + extra_key, parsed_value))
+            return keys_and_values
+        else:
+            return [("", obj)]

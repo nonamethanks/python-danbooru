@@ -1,0 +1,58 @@
+[project]
+name = "danbooru"
+version = "0.1.0"
+description = "A power user's library to the danbooru API."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "backoff>=2.2.1",
+    "inflection>=0.5.1",
+    "loguru>=0.7.3",
+    "pydantic>=2.11.5",
+    "requests>=2.32.3",
+]
+
+[dependency-groups]
+dev = [
+    "ipython>=9.3.0",
+    "mypy>=1.16.0",
+    "ruff>=0.11.12",
+    "types-requests>=2.32.0.20250602",
+]
+test = ["pytest>=8.4.0"]
+
+
+[tool.ruff]
+line-length = 140
+select = ["ALL"]
+ignore = [
+    "ANN002", # Missing type annotation for `*args`
+    "ANN003", # Missing type annotation for `**kwargs`
+    "ANN204", # Missing return type annotation for special method `__init__`
+    "ANN401", # Dynamically typed expressions (typing.Any) are disallowed
+    "D101",   # Missing docstring in public class
+    "D105",   # Missing docstring in magic method
+    "D106",   # Missing docstring in public nested class
+    "D212",   # Multi-line docstring summary should start at the first line
+    "D401",   # First line of docstring should be in imperative mood
+    "N801",   # Class name should use CapWords convention
+
+    "RET504", # Unnecessary assignment to `response` before `return` statement
+    "RET505", # Unnecessary `else` after `return` statement
+]
+
+[tool.ruff.lint.flake8-type-checking]
+runtime-evaluated-base-classes = [
+    "pydantic.BaseModel",
+    "danbooru.utils.BaseModel",
+    "danbooru.model.DanbooruModel",
+]
+
+[tool.autopep8]
+max_line_length = 140
+
+[tool.pytest.ini_options]
+filterwarnings = ["ignore::DeprecationWarning"]
+log_cli = true
+addopts = "-raP --showlocals -vv "
+# markers = []
