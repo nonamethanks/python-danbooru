@@ -87,8 +87,8 @@ class DanbooruModel(BaseModel):
         if not kwargs.pop("session", None):
             session = get_default_session()
 
-        kwargs.pop("page")
-        kwargs.pop("limit")
+        kwargs.pop("page", None)
+        kwargs.pop("limit", None)
         collected = []
         page = 1
 
