@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pydantic import model_validator
+
 from danbooru.utils import BaseModel
 
 LEVEL_MAP = {
@@ -20,18 +22,20 @@ LEVEL_MAP = {
 
 
 class UserLevel(BaseModel):
-    name: str
     number: int
+    name: str
 
-    def __init__(self, value: str | int | UserLevel):
-        """Takes either the level name or number."""
+    @model_validator(mode="before")
+    @classmethod
+    def validate_model(cls, value: int | str | UserLevel) -> dict:
+        """Validate that the level is valid."""
         if isinstance(value, str):
             name = value.upper()
             try:
                 number = LEVEL_MAP[name]
             except KeyError as e:
-                e.add_note(f"No level with name {name}.")
-                raise
+                msg = f"No level with name {name}."
+                raise ValueError(e) from e
 
         elif isinstance(value, int):
             number = value
@@ -39,28 +43,31 @@ class UserLevel(BaseModel):
                 number_index = list(LEVEL_MAP.values()).index(number)
                 name = list(LEVEL_MAP.keys())[number_index]
             except (IndexError, ValueError) as e:
-                e.add_note(f"No level with number {number}.")
-                raise
+                msg = f"No level with number {number}."
+                raise ValueError(msg) from e
         elif isinstance(value, UserLevel):
             name = value.name
             number = value.number
+        else:
+            e = f"{type(value)}: not an acceptable value."
+            raise TypeError(e)
 
-        super().__init__(name=name, number=number)
+        return {"number": number, "name": name}
 
-    def __lt__(self, value: int | UserLevel | str) -> bool:
-        return self.number < UserLevel(value).number
+    def __lt__(self, level: int | UserLevel | str) -> bool:
+        return self.number < UserLevel(level).number
 
-    def __le__(self, value: int | UserLevel | str) -> bool:
-        return self.number <= UserLevel(value).number
+    def __le__(self, level: int | UserLevel | str) -> bool:
+        return self.number <= UserLevel(level).number
 
-    def __gt__(self, value: int | UserLevel | str) -> bool:
-        return self.number > UserLevel(value).number
+    def __gt__(self, level: int | UserLevel | str) -> bool:
+        return self.number > UserLevel(level).number
 
-    def __ge__(self, value: int | UserLevel | str) -> bool:
-        return self.number >= UserLevel(value).number
+    def __ge__(self, level: int | UserLevel | str) -> bool:
+        return self.number >= UserLevel(level).number
 
-    def __eq__(self, value: int | UserLevel | str) -> bool:
-        return self.number == UserLevel(value).number
+    def __eq__(self, level: int | UserLevel | str) -> bool:
+        return self.number == UserLevel(level).number
 
     def __repr__(self) -> str:
         return f"UserLevel<{self.name}>"
