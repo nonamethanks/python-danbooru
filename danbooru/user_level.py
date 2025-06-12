@@ -41,10 +41,6 @@ class UserLevel(BaseModel):
             name = value.name
             number = value.number
 
-        elif isinstance(value, dict):
-            number = value.get("level")
-            name = cls.name_from_number(number)
-
         else:
             e = f"{value} ({type(value)}): not an acceptable value."
             raise TypeError(e)
@@ -52,9 +48,9 @@ class UserLevel(BaseModel):
         return {"number": number, "name": name}
 
     @model_serializer
-    def serializer(self) -> dict[str, int]:
+    def serializer(self) -> int:
         """Serialize the level."""
-        return {"level": self.number}
+        return self.number
 
     @staticmethod
     def name_from_number(number: int) -> str:
