@@ -26,6 +26,10 @@ def raise_http_exception(response: requests.Response) -> None:
 
         error_message = json_response["message"]
         backtrace = json_response["backtrace"]
+
+        if error_type == "ActiveRecord::QueryCanceled":
+            raise DanbooruTimeoutError(response, error_type=error_type, error_message=error_message, backtrace=backtrace)
+
         raise DanbooruHTTPError(response, error_type=error_type, error_message=error_message, backtrace=backtrace)
 
 
@@ -50,7 +54,7 @@ class DanbooruHTTPError(Exception):
     def message(self) -> str:
         """The exception message."""
         msg = f"{self.error_type} - {self.error_message}"
-        msg += f"\n On page. {self.response.request.url}"
+        msg += f"\n    On page:\n      {self.response.request.url}"
         if self.backtrace:
             msg += "\n    Backtrace:"
             for row in self.backtrace:
@@ -60,6 +64,10 @@ class DanbooruHTTPError(Exception):
 
 class DownbooruError(DanbooruHTTPError):
     """Site's down for maintenance."""
+
+
+class DanbooruTimeoutError(DanbooruHTTPError):
+    """Your query took too long."""
 
 
 class CloudflareError(DanbooruHTTPError):
