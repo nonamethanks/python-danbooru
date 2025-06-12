@@ -4,6 +4,7 @@
 import os
 
 from backoff import expo, on_exception
+from dotenv import load_dotenv
 from loguru import logger
 from requests import Response, Session
 from requests.exceptions import ReadTimeout
@@ -11,6 +12,8 @@ from requests.exceptions import ReadTimeout
 from danbooru.__version__ import package_version
 from danbooru.exceptions import CloudflareError, DownbooruError, raise_http_exception
 from danbooru.model import DanbooruModel, DanbooruModelType
+
+load_dotenv()
 
 
 class Danbooru:
