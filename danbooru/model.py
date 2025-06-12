@@ -70,7 +70,7 @@ class DanbooruModel(BaseModel):
         return inflection.pluralize(endpoint)
 
     @classmethod
-    def get(cls, session: Danbooru | None = None, **kwargs) -> list[Self]:
+    def get(cls, *, session: Danbooru | None = None, **kwargs) -> list[Self]:
         """Proxy for `Danbooru().danbooru_request("GET", endpoint, **kwargs)`."""
         if not session:
             session = get_default_session()
@@ -82,7 +82,7 @@ class DanbooruModel(BaseModel):
         return response  # type: ignore[return-value]
 
     @classmethod
-    def get_all(cls, session: Danbooru | None = None, **kwargs) -> list[Self]:
+    def get_all(cls, *, session: Danbooru | None = None, **kwargs) -> list[Self]:
         """Get all elements for a specific search."""
         if not session:
             session = get_default_session()

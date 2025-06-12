@@ -71,6 +71,8 @@ class Danbooru:
         if not isinstance(data, list):
             msg = f"API returned unexpected type: {type(data)} => {data}"
             raise TypeError(msg)
+
+        # todo: if validation error, use base model? generate dynamic model without field?
         model = DanbooruModel.model_for_endpoint(endpoint)
         return [model(**obj, session=self, response=response) for obj in data]
 
