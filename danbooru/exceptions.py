@@ -33,10 +33,6 @@ def raise_http_exception(response: requests.Response) -> None:
         raise DanbooruHTTPError(response, error_type=error_type, error_message=error_message, backtrace=backtrace)
 
 
-class RetriableDanbooruError:
-    """An error that can be retried."""
-
-
 class DanbooruHTTPError(Exception):
     """A danbooru HTTP error."""
 
@@ -66,13 +62,17 @@ class DanbooruHTTPError(Exception):
         return msg
 
 
-class DownbooruError(DanbooruHTTPError, RetriableDanbooruError):
+class RetriableDanbooruError(DanbooruHTTPError):
+    """An error that can be retried."""
+
+
+class DownbooruError(RetriableDanbooruError):
     """Site's down for maintenance."""
 
 
-class DanbooruTimeoutError(DanbooruHTTPError, RetriableDanbooruError):
+class DanbooruTimeoutError(RetriableDanbooruError):
     """Your query took too long."""
 
 
-class CloudflareError(DanbooruHTTPError, RetriableDanbooruError):
+class CloudflareError(RetriableDanbooruError):
     """Generic Cloudflare error."""
