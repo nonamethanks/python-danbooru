@@ -70,9 +70,9 @@ class DanbooruModel(BaseModel):
         return inflection.pluralize(endpoint)
 
     @classmethod
-    def get(cls, *, session: Danbooru | None = None, **kwargs) -> list[Self]:
-        """Proxy for `Danbooru().danbooru_request("GET", endpoint, **kwargs)`."""
-        if not session:
+    def get(cls, **kwargs) -> list[Self]:
+        """Proxy for `Danbooru().danbooru_request("GET", endpoint, **kwargs)`. Accepts an optional `session` param."""
+        if not kwargs.pop("session", None):
             session = get_default_session()
 
         if not cls.endpoint_name.startswith(("reports/", "counts/")):
@@ -82,9 +82,9 @@ class DanbooruModel(BaseModel):
         return response  # type: ignore[return-value]
 
     @classmethod
-    def get_all(cls, *, session: Danbooru | None = None, **kwargs) -> list[Self]:
-        """Get all elements for a specific search."""
-        if not session:
+    def get_all(cls, **kwargs) -> list[Self]:
+        """Get all elements for a specific search. Accepts an optional `session` param."""
+        if not kwargs.pop("session", None):
             session = get_default_session()
 
         kwargs.pop("page")
