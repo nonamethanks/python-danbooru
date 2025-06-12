@@ -6,7 +6,7 @@ Uses pydantic for validation.
 from __future__ import annotations
 
 import datetime
-from typing import TYPE_CHECKING, Self, TypeVar
+from typing import TYPE_CHECKING, Self, TypeVar, overload
 from urllib.parse import urlparse
 
 import inflection
@@ -19,6 +19,10 @@ if TYPE_CHECKING:
     from danbooru.danbooru import Danbooru
 
 DanbooruModelType = TypeVar("DanbooruModelType", bound="DanbooruModel")
+
+
+class _DanbooruModelReturnsDict:
+    ...
 
 
 class DanbooruModel(BaseModel):
@@ -63,14 +67,18 @@ class DanbooruModel(BaseModel):
     def endpoint_name(self) -> str:
         """Autogenerates the endpoint name."""
         endpoint = self.model_name
-        if endpoint.endswith("_report"):
-            endpoint = endpoint.removesuffix("_report")
-            endpoint = f"reports/{endpoint}"
-
         return inflection.pluralize(endpoint)
 
+    @overload
     @classmethod
-    def get(cls, **kwargs) -> list[Self]:
+    def get(cls: type[_DanbooruModelReturnsDict], **kwargs) -> Self: ...
+
+    @overload
+    @classmethod
+    def get(cls, **kwargs) -> list[Self]: ...
+
+    @classmethod
+    def get(cls, **kwargs) -> list[Self] | Self:
         """Proxy for `Danbooru().danbooru_request("GET", endpoint, **kwargs)`. Accepts an optional `session` param."""
         if not kwargs.pop("session", None):
             session = get_default_session()

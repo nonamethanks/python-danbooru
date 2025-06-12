@@ -11,7 +11,7 @@ from requests.exceptions import ReadTimeout
 
 from danbooru.__version__ import package_version
 from danbooru.exceptions import RetriableDanbooruError, raise_http_exception
-from danbooru.model import DanbooruModel, DanbooruModelType
+from danbooru.model import DanbooruModel, DanbooruModelType, _DanbooruModelReturnsDict
 
 load_dotenv()
 
@@ -44,7 +44,7 @@ class Danbooru:
         self.logger.trace(f"Setting User Agent: {user_agent}.")
 
     @on_exception(expo, (ReadTimeout, RetriableDanbooruError), max_tries=5)
-    def danbooru_request(self, method: str, endpoint: str, **kwargs) -> list[DanbooruModelType] | list[DanbooruModel]:
+    def danbooru_request(self, method: str, endpoint: str, **kwargs) -> list[DanbooruModelType] | list[DanbooruModel] | DanbooruModelType:
         """
         Send a request to the Danbooru api. The **kwargs are automatically parsed to be compatible with Rails parameters.
 
@@ -52,42 +52,58 @@ class Danbooru:
         """
         endpoint = endpoint.strip("/").removesuffix(".json")
         if method == "GET":
-            if endpoint == "posts":
-                kwargs.setdefault("limit", 200)
-            elif endpoint != "counts/posts":
-                kwargs.setdefault("limit", 1000)
-            kwargs = self._kwargs_to_rails_params(**kwargs)
+            kwargs = self._kwargs_to_rails_params(endpoint=endpoint, **kwargs)
             kwargs = {"params": kwargs}
 
         endpoint_url = f"{self.base_url}/{endpoint}".strip("/")
 
         response = self._session.request(method, endpoint_url, **kwargs)
-        self.logger.trace(f"Performed {method} request at {response.request.url}")
-        return self._parse_response(response, endpoint)
 
-    def _parse_response(self, response: Response, endpoint: str) -> list[DanbooruModelType] | list[DanbooruModel]:
+        self.logger.trace(f"Performed {method} request at {response.request.url}")
+
         if not response.ok:
             raise_http_exception(response)
 
+        return self._parse_response(response, endpoint)
+
+    def _parse_response(self, response: Response, endpoint: str) -> list[DanbooruModelType] | list[DanbooruModel] | DanbooruModelType:
         data = response.json()
 
-        if not isinstance(data, list):
-            msg = f"API returned unexpected type: {type(data)} => {data}"
-            raise TypeError(msg)
-
-        # todo: if validation error, use base model? generate dynamic model without field?
         model = DanbooruModel.model_for_endpoint(endpoint)
-        return [model(**obj, session=self, response=response) for obj in data]
+        if issubclass(model, _DanbooruModelReturnsDict):
+            if not isinstance(data, dict):
+                msg = f"API returned unexpected type: {type(data)} => {data}"
+                raise TypeError(msg, model)
+
+            return model(**data, session=self, response=response)
+        else:
+            if not isinstance(data, list):
+                msg = f"API returned unexpected type: {type(data)} => {data}"
+                raise TypeError(msg, model)
+
+            return [model(**obj, session=self, response=response) for obj in data]
 
     @classmethod
-    def _kwargs_to_rails_params(cls, **kwargs) -> dict:
+    def _kwargs_to_rails_params(cls, endpoint: str, **kwargs) -> dict:
         """Turn kwargs into url parameters that Rails can understand."""
         params = {}
+
+        if endpoint == "posts":
+            params.setdefault("limit", 200)
+        elif endpoint == "counts/posts":
+            ...
+        else:
+            params.setdefault("limit", 1000)
+
         for named_parameter in ["only", "page", "limit"]:
             if n_p := kwargs.pop(named_parameter, None):
                 params[named_parameter] = n_p
 
         for _key, _value in kwargs.items():
+            if _key == "tags" and endpoint in ["posts", "counts/posts"]:
+                params[_key] = _value
+                continue
+
             parsed_key = f"search[{_key}]"
             for extra_key, parsed_value in cls._parse_to_include(_value):
                 params[parsed_key + extra_key] = parsed_value
