@@ -10,7 +10,7 @@ from requests import Response, Session
 from requests.exceptions import ReadTimeout
 
 from danbooru.__version__ import package_version
-from danbooru.exceptions import CloudflareError, DownbooruError, raise_http_exception
+from danbooru.exceptions import RetriableDanbooruError, raise_http_exception
 from danbooru.model import DanbooruModel, DanbooruModelType
 
 load_dotenv()
@@ -43,7 +43,7 @@ class Danbooru:
         }
         self.logger.trace(f"Setting User Agent: {user_agent}.")
 
-    @on_exception(expo, (ReadTimeout, CloudflareError, DownbooruError), max_tries=5)
+    @on_exception(expo, (ReadTimeout, RetriableDanbooruError), max_tries=5)
     def danbooru_request(self, method: str, endpoint: str, **kwargs) -> list[DanbooruModelType] | list[DanbooruModel]:
         """
         Send a request to the Danbooru api. The **kwargs are automatically parsed to be compatible with Rails parameters.
