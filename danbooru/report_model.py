@@ -1,4 +1,4 @@
-"""Model definition for /reports/posts."""
+"""Model definition for reports."""
 
 from __future__ import annotations
 
@@ -8,10 +8,8 @@ from danbooru.model import DanbooruModel
 from danbooru.user_level import UserLevel
 
 
-class DanbooruPostReport(DanbooruModel):
+class DanbooruReportModel(DanbooruModel):
     date: datetime.datetime = None
-    posts: int
-
     level: UserLevel | None = None
 
     def __repr__(self) -> str:

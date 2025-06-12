@@ -47,6 +47,7 @@ runtime-evaluated-base-classes = [
     "pydantic.BaseModel",
     "danbooru.utils.BaseModel",
     "danbooru.model.DanbooruModel",
+    "danbooru.report_model.DanbooruReportModel",
 ]
 
 [tool.autopep8]

@@ -36,7 +36,7 @@ class DanbooruModel(BaseModel):
     @property
     def url(self) -> str:
         """The url to the model instance."""
-        if self.__class__ == DanbooruModel:
+        if self.__class__.__name__ in ("DanbooruModel", "DanbooruReportModel"):
             return self._response.url
 
         url = f"{self._session.base_url}/{self.endpoint_name}"
@@ -104,8 +104,7 @@ class DanbooruModel(BaseModel):
     @classmethod
     def model_for_name(cls, name: str) -> type[DanbooruModelType | DanbooruModel]:
         """Get the right model from an endpoint."""
-        from danbooru.models import _models
-        for model in _models:
+        for model in cls.all_models:
             if model.model_name == name:  # type: ignore[attr-defined]
                 return model
         return cls
@@ -113,14 +112,20 @@ class DanbooruModel(BaseModel):
     @classmethod
     def model_for_endpoint(cls, endpoint: str) -> type[DanbooruModelType | DanbooruModel]:
         """Get the right model from an endpoint."""
-        from danbooru.models import _models
-        for model in _models:
+        for model in cls.all_models:
             if model == DanbooruModel:
                 continue
 
             if model.endpoint_name == endpoint:  # type: ignore[attr-defined]
                 return model
         return cls
+
+    @classproperty
+    def all_models(self) -> list[type[DanbooruModelType]]:
+        """Return all subclasses."""
+        from danbooru.models import _models
+        from danbooru.reports import _report_models
+        return _models + _report_models
 
 
 g = {}
