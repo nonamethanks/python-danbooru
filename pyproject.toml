@@ -32,12 +32,15 @@ ignore = [
     "ANN003", # Missing type annotation for `**kwargs`
     "ANN204", # Missing return type annotation for special method `__init__`
     "ANN401", # Dynamically typed expressions (typing.Any) are disallowed
-    "D101",   # Missing docstring in public class
-    "D105",   # Missing docstring in magic method
-    "D106",   # Missing docstring in public nested class
-    "D212",   # Multi-line docstring summary should start at the first line
-    "D401",   # First line of docstring should be in imperative mood
-    "N801",   # Class name should use CapWords convention
+
+    "D101", # Missing docstring in public class
+    "D105", # Missing docstring in magic method
+    "D106", # Missing docstring in public nested class
+    "D202", # No blank lines allowed after function docstring
+    "D212", # Multi-line docstring summary should start at the first line
+    "D401", # First line of docstring should be in imperative mood
+
+    "N801", # Class name should use CapWords convention
 
     "RET504", # Unnecessary assignment to `response` before `return` statement
     "RET505", # Unnecessary `else` after `return` statement

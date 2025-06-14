@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import datetime
 from typing import TYPE_CHECKING, Self, TypeVar, overload
-from urllib.parse import urlparse
+from urllib.parse import urlencode, urlparse
 
 import inflection
 
@@ -68,6 +68,17 @@ class DanbooruModel(BaseModel):
         """Autogenerates the endpoint name."""
         endpoint = self.model_name
         return inflection.pluralize(endpoint)
+
+    @classmethod
+    def url_for(cls, **kwargs) -> str:
+        """Return the canonical url for a model with params."""
+
+        if not kwargs.pop("session", None):
+            session = get_default_session()
+
+        params = session._kwargs_to_rails_params(endpoint=cls.endpoint_name, **kwargs)  # noqa: SLF001
+        param_string = urlencode(params)
+        return f"{session.base_url}/{cls.endpoint_name}?{param_string}"
 
     @overload
     @classmethod
