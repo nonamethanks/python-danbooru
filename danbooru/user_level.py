@@ -67,6 +67,12 @@ class UserLevel(BaseModel):
     @staticmethod
     def number_from_name(name: str) -> int:
         """Return the level name from a number."""
+        name = name.upper()
+        if name == "MOD":
+            name = "MODERATOR"
+        elif name == "CONTRIB":
+            name = "CONTRIBUTOR"
+
         try:
             number = LEVEL_MAP[name]
         except KeyError as e:
