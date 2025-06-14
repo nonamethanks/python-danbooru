@@ -97,7 +97,7 @@ class DanbooruModel(BaseModel):
         if not cls.endpoint_name.startswith(("reports/", "counts/")):
             kwargs.setdefault("limit", 1)
 
-        response = session.danbooru_request("GET", cls.endpoint_name, cache=cache ** kwargs)
+        response = session.danbooru_request("GET", cls.endpoint_name, cache=cache, ** kwargs)
         return response  # type: ignore[return-value]
 
     @classmethod
