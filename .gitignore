@@ -11,3 +11,5 @@ wheels/
 
 # creds
 .env
+
+http_cache.sqlite

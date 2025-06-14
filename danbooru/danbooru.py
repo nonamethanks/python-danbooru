@@ -2,12 +2,14 @@
 
 
 import os
+from datetime import timedelta
 
 from backoff import expo, on_exception
 from dotenv import load_dotenv
 from loguru import logger
 from requests import Response, Session
 from requests.exceptions import ReadTimeout
+from requests_cache import CachedResponse, CachedSession
 
 from danbooru.__version__ import package_version
 from danbooru.exceptions import RetriableDanbooruError, raise_http_exception
@@ -29,22 +31,34 @@ class Danbooru:
         self.logger.trace(f"Setting base url: {base_url}")
 
         self._session = Session()
+        self._cache_session = CachedSession(
+            allowable_codes=range(200, 400),
+            allowable_methods=["GET", "HEAD"],
+            expire_after=timedelta(hours=1),
+        )
 
         if danbooru_username and danbooru_api_key:
             self.logger.trace(f"Setting username: {danbooru_username}")
             self._session.auth = (danbooru_username, danbooru_api_key)
+            self._cache_session.auth = (danbooru_username, danbooru_api_key)
         else:
             self.logger.trace("No username was configured. All requests will be anonymous.")
 
-        user_agent = f"DanbooruTools/{package_version} <username='{danbooru_username or ""}'>"
-        self._session.headers = {
-            "User-Agent": user_agent,
+        headers = {
+            "User-Agent": f"DanbooruTools/{package_version} <username='{danbooru_username or ""}'>",
             "Accept": "application/json",
         }
-        self.logger.trace(f"Setting User Agent: {user_agent}.")
+        self.logger.trace(f"Setting User Agent: {headers["User-Agent"]}.")
+        self._session.headers = headers
+        self._cache_session.headers = headers
 
     @on_exception(expo, (ReadTimeout, RetriableDanbooruError), max_tries=5)
-    def danbooru_request(self, method: str, endpoint: str, **kwargs) -> list[DanbooruModelType] | list[DanbooruModel] | DanbooruModelType:
+    def danbooru_request(self,
+                         method: str,
+                         endpoint: str,
+                         cache: bool = False,  # noqa: FBT001, FBT002
+                         **kwargs,
+                         ) -> list[DanbooruModelType] | list[DanbooruModel] | DanbooruModelType:
         """
         Send a request to the Danbooru api. The **kwargs are automatically parsed to be compatible with Rails parameters.
 
@@ -57,9 +71,15 @@ class Danbooru:
 
         endpoint_url = f"{self.base_url}/{endpoint}".strip("/")
 
-        response = self._session.request(method, endpoint_url, **kwargs)
+        if cache:
+            response = self._cache_session.request(method, endpoint_url, **kwargs)
+        else:
+            response = self._session.request(method, endpoint_url, **kwargs)
 
-        self.logger.trace(f"Performed {method} request at {response.request.url}")
+        if isinstance(response, CachedResponse) and response.from_cache:
+            self.logger.trace(f"Retrieved cached {method} request for {response.request.url}")
+        else:
+            self.logger.trace(f"Performed {method} request for {response.request.url}")
 
         if not response.ok:
             raise_http_exception(response)

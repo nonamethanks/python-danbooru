@@ -71,14 +71,14 @@ class DanbooruModel(BaseModel):
 
     @overload
     @classmethod
-    def get(cls: type[_DanbooruModelReturnsDict], **kwargs) -> Self: ...
+    def get(cls: type[_DanbooruModelReturnsDict], cache: bool = False, **kwargs) -> Self: ...  # noqa: FBT001, FBT002
 
     @overload
     @classmethod
-    def get(cls, **kwargs) -> list[Self]: ...
+    def get(cls, cache: bool = False, **kwargs) -> list[Self]: ...  # noqa: FBT001, FBT002
 
     @classmethod
-    def get(cls, **kwargs) -> list[Self] | Self:
+    def get(cls, cache: bool = False, **kwargs) -> list[Self] | Self:  # noqa: FBT001, FBT002
         """Proxy for `Danbooru().danbooru_request("GET", endpoint, **kwargs)`. Accepts an optional `session` param."""
         if not kwargs.pop("session", None):
             session = get_default_session()
@@ -86,7 +86,7 @@ class DanbooruModel(BaseModel):
         if not cls.endpoint_name.startswith(("reports/", "counts/")):
             kwargs.setdefault("limit", 1)
 
-        response = session.danbooru_request("GET", cls.endpoint_name, **kwargs)
+        response = session.danbooru_request("GET", cls.endpoint_name, cache=cache ** kwargs)
         return response  # type: ignore[return-value]
 
     @classmethod
