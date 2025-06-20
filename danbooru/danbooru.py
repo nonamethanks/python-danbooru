@@ -12,7 +12,7 @@ from requests.exceptions import JSONDecodeError, ReadTimeout
 from requests_cache import CachedResponse, CachedSession
 
 from danbooru.__version__ import package_version
-from danbooru.exceptions import RetriableDanbooruError, raise_http_exception
+from danbooru.exceptions import EmptyResponseError, RetriableDanbooruError, raise_http_exception
 from danbooru.model import DanbooruModel, DanbooruModelType, _DanbooruModelReturnsDict
 
 load_dotenv()
@@ -90,6 +90,10 @@ class Danbooru:
         try:
             data = response.json()
         except JSONDecodeError as e:
+            if not response.content:
+                raise EmptyResponseError(response,
+                                         error_type="EmptyResponseError",
+                                         error_message="The response was successful but nothing was returned.") from e
             raise NotImplementedError(response.content) from e
 
         model = DanbooruModel.model_for_endpoint(endpoint)

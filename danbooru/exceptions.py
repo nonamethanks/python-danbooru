@@ -54,7 +54,8 @@ class DanbooruHTTPError(Exception):
     def message(self) -> str:
         """The exception message."""
         msg = f"{self.error_type} - {self.error_message}"
-        msg += f"\n    On page:\n      {self.response.request.url}"
+        msg += f"\n    Status code: {self.response.status_code}"
+        msg += f"\n    On page: {self.response.request.url}"
         if self.backtrace:
             msg += "\n    Backtrace:"
             for row in self.backtrace:
@@ -76,3 +77,7 @@ class DanbooruTimeoutError(RetriableDanbooruError):
 
 class CloudflareError(RetriableDanbooruError):
     """Generic Cloudflare error."""
+
+
+class EmptyResponseError(RetriableDanbooruError):
+    """The response was empty, but the request was successful."""
