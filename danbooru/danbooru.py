@@ -32,7 +32,7 @@ class Danbooru:
 
         self._session = Session()
         self._cache_session = CachedSession(
-            allowable_codes=range(200, 400),
+            allowable_codes=range(200, 300),
             allowable_methods=["GET", "HEAD"],
             expire_after=timedelta(hours=1),
         )
