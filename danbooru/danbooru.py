@@ -8,7 +8,7 @@ from backoff import expo, on_exception
 from dotenv import load_dotenv
 from loguru import logger
 from requests import Response, Session
-from requests.exceptions import ReadTimeout
+from requests.exceptions import JSONDecodeError, ReadTimeout
 from requests_cache import CachedResponse, CachedSession
 
 from danbooru.__version__ import package_version
@@ -87,7 +87,10 @@ class Danbooru:
         return self._parse_response(response, endpoint)
 
     def _parse_response(self, response: Response, endpoint: str) -> list[DanbooruModelType] | list[DanbooruModel] | DanbooruModelType:
-        data = response.json()
+        try:
+            data = response.json()
+        except JSONDecodeError as e:
+            raise NotImplementedError(response.content) from e
 
         model = DanbooruModel.model_for_endpoint(endpoint)
         if issubclass(model, _DanbooruModelReturnsDict):
