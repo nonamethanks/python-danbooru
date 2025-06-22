@@ -1,20 +1,23 @@
 """Defines the danbooru models individually."""
 
-import importlib
-import pkgutil
-from typing import TYPE_CHECKING
+from danbooru.models.bulk_update_request import DanbooruBulkUpdateRequest
+from danbooru.models.comment import DanbooruComment
+from danbooru.models.forum_post import DanbooruForumPost
+from danbooru.models.post import DanbooruPost
+from danbooru.models.post_counts import DanbooruPostCounts
+from danbooru.models.post_version import DanbooruPostVersion
+from danbooru.models.tag import DanbooruTag
+from danbooru.models.user import DanbooruUser
+from danbooru.models.wiki_page import DanbooruWikiPage
 
-from danbooru import models
-
-if TYPE_CHECKING:
-    from danbooru.model import DanbooruModelType
-
-_models: list[type["DanbooruModelType"]] = []  # type: ignore[valid-type]
-
-for _finder, name, _ispkg in pkgutil.iter_modules(models.__path__, models.__name__ + "."):
-    submodule = importlib.import_module(name)
-    for attr in dir(submodule):
-        if attr.startswith("Danbooru"):
-            model = getattr(submodule, attr)
-            _models.append(model)
-            globals()[attr] = model
+_models = [
+    DanbooruBulkUpdateRequest,
+    DanbooruComment,
+    DanbooruForumPost,
+    DanbooruPostCounts,
+    DanbooruPostVersion,
+    DanbooruPost,
+    DanbooruTag,
+    DanbooruUser,
+    DanbooruWikiPage,
+]
