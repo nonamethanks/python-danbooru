@@ -9,7 +9,7 @@ import datetime
 from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import TYPE_CHECKING, Self, TypeVar, overload
-from urllib.parse import urlencode, urlparse
+from urllib.parse import parse_qs, urlencode, urlparse
 
 import inflection
 from loguru import logger
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
     from pydantic.fields import FieldInfo
-    from requests import Response
+    from requests import PreparedRequest, Response
 
     from danbooru.danbooru import Danbooru
 
@@ -84,7 +84,14 @@ class DanbooruModel(BaseModel):
             return value
 
         if not field.is_required() and value is None:
-            raise WrongIncludeCallError(name)
+            request: PreparedRequest = super().__getattribute__("_request")
+            params = parse_qs(urlparse(request.url).query).get("only", [])
+            if params:
+                params = params[0].split(",")
+            params = params or super().__getattribute__("default_includes")
+
+            if name not in params:
+                raise WrongIncludeCallError(name)
 
         return value
 
