@@ -48,7 +48,6 @@ _parent_data = ContextVar("_parent_data")
 
 
 class DanbooruModel(BaseModel):
-
     def __init__(self, *, response: Response | None = None, session: Danbooru | None = None, **data):
         """Declare a generic Danbooru model as fallback in case the specific ones aren't defined."""
 
@@ -201,6 +200,9 @@ class DanbooruModel(BaseModel):
         from danbooru.models import _models
         from danbooru.reports import _report_models
         return _models + _report_models
+
+    def __hash__(self):
+        return hash(self.url)
 
 
 g = {}
