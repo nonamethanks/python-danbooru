@@ -6,6 +6,8 @@ Uses pydantic for validation.
 from __future__ import annotations
 
 import datetime
+from contextlib import contextmanager
+from contextvars import ContextVar
 from typing import TYPE_CHECKING, Self, TypeVar, overload
 from urllib.parse import urlencode, urlparse
 
@@ -14,6 +16,7 @@ import inflection
 from danbooru.utils import BaseModel, classproperty
 
 if TYPE_CHECKING:
+    from pydantic.fields import FieldInfo
     from requests import Response
 
     from danbooru.danbooru import Danbooru
@@ -25,17 +28,59 @@ class _DanbooruModelReturnsDict:
     ...
 
 
-class DanbooruModel(BaseModel):
-    id: int = None
-    created_at: datetime.datetime = None
-    updated_at: datetime.datetime = None
+class WrongIncludeCallError(Exception):
+    def __init__(self, value: str):
+        """Raise an exception when an optional parameter was not passed to the query, but it's still accessed in the model."""
+        super().__init__(f"We don't have a value for '{value}' because it was not passed to the query through the only= parameter.")
 
-    def __init__(self, *, response: Response, session: Danbooru, **data):
+
+_parent_data = ContextVar("_parent_data")
+
+
+class DanbooruModel(BaseModel):
+    id: int
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+
+    def __init__(self, *, response: Response | None = None, session: Danbooru | None = None, **data):
         """Declare a generic Danbooru model as fallback in case the specific ones aren't defined."""
-        super().__init__(**data)
-        self._request = response.request
-        self._response = response
-        self._session = session
+
+        with self._bind({"session": session or _parent_data.get().get("session"),
+                         "response": response or _parent_data.get().get("response")}):
+            session = session or _parent_data.get().get("session")
+            response = response or _parent_data.get().get("response")
+            super().__init__(**data, response=response, session=session)
+
+            self._request = response.request
+            self._response = response
+            self._session = session
+
+    @classmethod
+    @contextmanager
+    def _bind(cls, parent_data: dict):  # noqa: ANN206
+        token = _parent_data.set(parent_data)
+        try:
+            yield cls
+        finally:
+            _parent_data.reset(token)
+
+    @classmethod
+    def default_includes(cls) -> list[str]:
+        """Default includes for the model."""
+        return [name for name, field in cls.model_fields.items() if field.is_required()]
+
+    def __getattribute__(self, name: str):
+        """Override to skip validation for the response."""
+        field: FieldInfo | None = super().__getattribute__("model_fields").get(name)
+        value = super().__getattribute__(name)
+
+        if not field:
+            return value
+
+        if not field.is_required() and value is None:
+            raise WrongIncludeCallError(name)
+
+        return value
 
     @property
     def url(self) -> str:
@@ -97,7 +142,7 @@ class DanbooruModel(BaseModel):
         if not cls.endpoint_name.startswith(("reports/", "counts/")):
             kwargs.setdefault("limit", 1)
 
-        response = session.danbooru_request("GET", cls.endpoint_name, cache=cache, ** kwargs)
+        response = session.danbooru_request("GET", cls.endpoint_name, cache=cache, **kwargs)
         return response  # type: ignore[return-value]
 
     @classmethod

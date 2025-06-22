@@ -5,7 +5,11 @@ from danbooru.model import DanbooruModel
 
 
 class DanbooruWikiPage(DanbooruModel):
+    title: str
     body: str
+    is_locked: bool
+    other_names: list[str]
+    is_deleted: bool
 
     @property
     def linked_tags(self) -> list[str]:

@@ -66,6 +66,7 @@ class Danbooru:
         """
         endpoint = endpoint.strip("/").removesuffix(".json")
         if method == "GET":
+            kwargs["only"] = self._get_include(endpoint=endpoint, include=kwargs.pop("include", []), only=kwargs.pop("only", ""))
             kwargs = self._kwargs_to_rails_params(endpoint=endpoint, **kwargs)
             kwargs = {"params": kwargs}
 
@@ -109,6 +110,23 @@ class Danbooru:
                 raise TypeError(msg, model)
 
             return [model(**obj, session=self, response=response) for obj in data]
+
+    def _get_include(self, endpoint: str, include: list[str] | str | None = None, only: list[str] | str | None = None) -> str | None:
+        if only:
+            err = "Usage of only= is not supported. Use include= instead to include extra fields."
+            raise ValueError(err)
+
+        if not include:
+            return None
+
+        if isinstance(include, str):
+            include = include.split(",")
+
+        model = DanbooruModel.model_for_endpoint(endpoint)
+        include = model.default_includes() + (include or [])
+
+        include_str = ",".join(dict.fromkeys(include))
+        return include_str
 
     @classmethod
     def _kwargs_to_rails_params(cls, endpoint: str, **kwargs) -> dict:
