@@ -10,7 +10,7 @@ class DanbooruBulkUpdateRequest(DanbooruModel):
     script: str
     status: str
     approver_id: int | None
-    forum_post_id: int
+    forum_post_id: int | None
     tags: list[str]
 
     forum_post: DanbooruForumPost | None = None

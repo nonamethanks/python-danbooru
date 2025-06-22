@@ -31,7 +31,8 @@ class _DanbooruModelReturnsDict:
 class WrongIncludeCallError(Exception):
     def __init__(self, value: str):
         """Raise an exception when an optional parameter was not passed to the query, but it's still accessed in the model."""
-        super().__init__(f"We don't have a value for '{value}' because it was not passed to the query through the only= parameter.")
+        super().__init__(f"We don't have a value for '{value}' because "
+                         "it was not passed to the query through the only= parameter, or it's missing from the api.")
 
 
 _parent_data = ContextVar("_parent_data")
@@ -138,9 +139,6 @@ class DanbooruModel(BaseModel):
         """Proxy for `Danbooru().danbooru_request("GET", endpoint, **kwargs)`. Accepts an optional `session` param."""
         if not kwargs.pop("session", None):
             session = get_default_session()
-
-        if not cls.endpoint_name.startswith(("reports/", "counts/")):
-            kwargs.setdefault("limit", 1)
 
         response = session.danbooru_request("GET", cls.endpoint_name, cache=cache, **kwargs)
         return response  # type: ignore[return-value]

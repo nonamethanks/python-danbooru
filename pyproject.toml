@@ -62,3 +62,12 @@ filterwarnings = ["ignore::DeprecationWarning"]
 log_cli = true
 addopts = "-raP --showlocals -vv "
 # markers = []
+
+[tool.ruff.lint.extend-per-file-ignores]
+"tests/**/*.py" = [
+    "S101",    # asserts allowed in tests
+    "ARG",     # Unused function args -> fixtures nevertheless are functionally relevant...
+    "FBT",     # Don't care about booleans as positional arguments in tests, e.g. via @pytest.mark.parametrize()
+    "D",       # docstrings
+    "PLR2004", # magic value
+]
