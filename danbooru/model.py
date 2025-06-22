@@ -6,6 +6,7 @@ Uses pydantic for validation.
 from __future__ import annotations
 
 import datetime
+import itertools
 from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import TYPE_CHECKING, Self, TypeVar, overload
@@ -147,8 +148,13 @@ class DanbooruModel(BaseModel):
         return response  # type: ignore[return-value]
 
     @classmethod
-    def get_all(cls, **kwargs) -> Generator[list[Self], None, None]:
+    def get_all(cls, **kwargs) -> list[Self]:
         """Get all elements for a specific search. Accepts an optional `session` param."""
+        return [m for p in cls.all_pages(**kwargs) for m in p]
+
+    @classmethod
+    def all_pages(cls, **kwargs) -> Generator[list[Self], None, None]:
+        """Loop through the pages of a specific search. Accepts an optional `session` param."""
         if not kwargs.pop("session", None):
             session = get_default_session()
 
