@@ -1,9 +1,9 @@
 """Model definition for /tag_implications."""
 
-from danbooru.model import DanbooruModel
+from danbooru.model import DanbooruModel, _DanbooruModelWithId
 
 
-class DanbooruTagImplication(DanbooruModel):
+class DanbooruTagImplication(DanbooruModel, _DanbooruModelWithId):
     reason: str
     creator_id: int
     antecedent_name: str

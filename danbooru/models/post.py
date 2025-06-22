@@ -1,9 +1,9 @@
 """Model definition for /posts."""
 
-from danbooru.model import DanbooruModel
+from danbooru.model import DanbooruModel, _DanbooruModelWithId
 
 
-class DanbooruPost(DanbooruModel):
+class DanbooruPost(DanbooruModel, _DanbooruModelWithId):
     tag_string: str
 
     @property

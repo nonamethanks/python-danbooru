@@ -1,9 +1,9 @@
 """Model definition for /forum_posts."""
 
-from danbooru.model import DanbooruModel
+from danbooru.model import DanbooruModel, _DanbooruModelWithId
 
 
-class DanbooruForumPost(DanbooruModel):
+class DanbooruForumPost(DanbooruModel, _DanbooruModelWithId):
     creator_id: int
     body: str
     updater_id: int

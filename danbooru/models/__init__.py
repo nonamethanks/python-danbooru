@@ -6,6 +6,7 @@ from danbooru.models.forum_post import DanbooruForumPost
 from danbooru.models.post import DanbooruPost
 from danbooru.models.post_counts import DanbooruPostCounts
 from danbooru.models.post_version import DanbooruPostVersion
+from danbooru.models.related_tag import DanbooruRelatedTag
 from danbooru.models.tag import DanbooruTag
 from danbooru.models.tag_implication import DanbooruTagImplication
 from danbooru.models.user import DanbooruUser
@@ -18,6 +19,7 @@ _models = [
     DanbooruPostCounts,
     DanbooruPostVersion,
     DanbooruPost,
+    DanbooruRelatedTag,
     DanbooruTag,
     DanbooruTagImplication,
     DanbooruUser,

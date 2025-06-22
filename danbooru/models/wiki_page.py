@@ -1,10 +1,10 @@
 """Model definition for /wiki_pages."""
 import re
 
-from danbooru.model import DanbooruModel
+from danbooru.model import DanbooruModel, _DanbooruModelWithId
 
 
-class DanbooruWikiPage(DanbooruModel):
+class DanbooruWikiPage(DanbooruModel, _DanbooruModelWithId):
     title: str
     body: str
     is_locked: bool

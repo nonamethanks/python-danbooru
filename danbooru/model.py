@@ -6,7 +6,6 @@ Uses pydantic for validation.
 from __future__ import annotations
 
 import datetime
-import itertools
 from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import TYPE_CHECKING, Self, TypeVar, overload
@@ -32,6 +31,12 @@ class _DanbooruModelReturnsDict:
     ...
 
 
+class _DanbooruModelWithId(BaseModel):
+    id: int
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+
+
 class WrongIncludeCallError(Exception):
     def __init__(self, value: str):
         """Raise an exception when an optional parameter was not passed to the query, but it's still accessed in the model."""
@@ -43,9 +48,6 @@ _parent_data = ContextVar("_parent_data")
 
 
 class DanbooruModel(BaseModel):
-    id: int
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
 
     def __init__(self, *, response: Response | None = None, session: Danbooru | None = None, **data):
         """Declare a generic Danbooru model as fallback in case the specific ones aren't defined."""
@@ -94,7 +96,8 @@ class DanbooruModel(BaseModel):
             return self._response.url
 
         url = f"{self._session.base_url}/{self.endpoint_name}"
-        if self.id:
+
+        if isinstance(self, _DanbooruModelWithId):
             return f"{url}/{self.id}"
 
         if (query := urlparse(self._request.url).query):
