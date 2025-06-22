@@ -21,7 +21,7 @@ class DanbooruRelatedTag(DanbooruModel, _DanbooruModelReturnsDict):
     query: str
     post_count: int
 
-    tag: "DanbooruTag"
+    tag: DanbooruTag
 
     related_tags: list[RelatedTagData]
 
