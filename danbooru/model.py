@@ -12,10 +12,13 @@ from typing import TYPE_CHECKING, Self, TypeVar, overload
 from urllib.parse import urlencode, urlparse
 
 import inflection
+from loguru import logger
 
 from danbooru.utils import BaseModel, classproperty
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
+
     from pydantic.fields import FieldInfo
     from requests import Response
 
@@ -144,23 +147,24 @@ class DanbooruModel(BaseModel):
         return response  # type: ignore[return-value]
 
     @classmethod
-    def get_all(cls, **kwargs) -> list[Self]:
+    def get_all(cls, **kwargs) -> Generator[list[Self], None, None]:
         """Get all elements for a specific search. Accepts an optional `session` param."""
         if not kwargs.pop("session", None):
             session = get_default_session()
 
         kwargs.pop("page", None)
         kwargs.pop("limit", None)
-        collected = []
         page = 1
 
-        limit = 200 if cls.model_name == "posts" else 1000
+        limit = 200 if cls.endpoint_name == "posts" else 1000
 
         while True:
             response = session.danbooru_request("GET", cls.endpoint_name, page=page, limit=limit, **kwargs)
-            collected += response
+            if response:
+                yield response
             if len(response) < limit:
-                return collected
+                logger.trace(f"Got {len(response)} (<{limit}) {cls.endpoint_name} on page {page}, stopping.")
+                return
             page += 1
 
     @classmethod
