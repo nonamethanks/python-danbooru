@@ -97,4 +97,4 @@ class UserLevel(BaseModel):
         return self.number == UserLevel(level).number
 
     def __repr__(self) -> str:
-        return f"UserLevel<{self.name}>"
+        return f"UserLevel[{self.name}]"

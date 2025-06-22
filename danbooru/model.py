@@ -112,7 +112,7 @@ class DanbooruModel(BaseModel):
         return url
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}<{self.url}>"
+        return f"{type(self).__name__}[{self.url}]"
 
     @classproperty
     def model_name(self) -> str:
