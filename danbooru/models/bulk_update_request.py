@@ -1,10 +1,10 @@
 """Model definition for /bulk_update_requests."""
 
-from danbooru.model import DanbooruModel, _DanbooruModelWithId
+from danbooru.model import DanbooruInstancedModel
 from danbooru.models.forum_post import DanbooruForumPost
 
 
-class DanbooruBulkUpdateRequest(DanbooruModel, _DanbooruModelWithId):
+class DanbooruBulkUpdateRequest(DanbooruInstancedModel):
     user_id: int
     script: str
     status: str

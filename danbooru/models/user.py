@@ -1,8 +1,8 @@
 """Model definition for /users."""
 
-from danbooru.model import DanbooruModel, _DanbooruModelWithId
+from danbooru.model import DanbooruInstancedModel
 from danbooru.user_level import UserLevel
 
 
-class DanbooruUser(DanbooruModel, _DanbooruModelWithId):
+class DanbooruUser(DanbooruInstancedModel):
     level: UserLevel

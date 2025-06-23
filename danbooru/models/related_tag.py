@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from danbooru.model import DanbooruModel, _DanbooruModelReturnsDict
+from danbooru.model import DanbooruModel
 from danbooru.models.tag import DanbooruTag
 from danbooru.utils import classproperty
 
@@ -17,7 +17,7 @@ class RelatedTagData(BaseModel):
     frequency: float
 
 
-class DanbooruRelatedTag(DanbooruModel, _DanbooruModelReturnsDict):
+class DanbooruRelatedTag(DanbooruModel):
     query: str
     post_count: int
 
@@ -26,5 +26,5 @@ class DanbooruRelatedTag(DanbooruModel, _DanbooruModelReturnsDict):
     related_tags: list[RelatedTagData]
 
     @classproperty
-    def endpoint_name(self) -> str:  # noqa: D102
+    def generic_endpoint(self) -> str:  # noqa: D102
         return "related_tag"

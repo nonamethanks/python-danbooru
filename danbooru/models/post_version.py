@@ -1,7 +1,7 @@
 """Model definition for /post_versions."""
 
-from danbooru.model import DanbooruModel, _DanbooruModelWithId
+from danbooru.model import DanbooruInstancedModel
 
 
-class DanbooruPostVersion(DanbooruModel, _DanbooruModelWithId):
+class DanbooruPostVersion(DanbooruInstancedModel):
     ...

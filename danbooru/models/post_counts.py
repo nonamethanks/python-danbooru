@@ -1,7 +1,7 @@
 """Model definition for /counts/posts."""
 
 
-from danbooru.model import DanbooruModel, _DanbooruModelReturnsDict
+from danbooru.model import DanbooruModel
 from danbooru.utils import BaseModel, classproperty
 
 
@@ -9,11 +9,11 @@ class _Counts(BaseModel):
     posts: int
 
 
-class DanbooruPostCounts(DanbooruModel, _DanbooruModelReturnsDict):
+class DanbooruPostCounts(DanbooruModel):
     counts: _Counts
 
     @classproperty
-    def endpoint_name(self) -> str:  # noqa: D102
+    def generic_endpoint(self) -> str:  # noqa: D102
         return "counts/posts"
 
     @property

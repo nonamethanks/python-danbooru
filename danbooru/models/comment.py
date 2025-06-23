@@ -1,10 +1,10 @@
 """Model definition for /comments."""
 
 
-from danbooru.model import DanbooruModel, _DanbooruModelWithId
+from danbooru.model import DanbooruInstancedModel
 
 
-class DanbooruComment(DanbooruModel, _DanbooruModelWithId):
+class DanbooruComment(DanbooruInstancedModel):
     post_id: int
     creator_id: int
     body: str

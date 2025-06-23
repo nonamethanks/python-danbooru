@@ -12,8 +12,8 @@ from typing import TYPE_CHECKING, Self, TypeVar, overload
 from urllib.parse import parse_qs, urlencode, urlparse
 
 import inflection
-from loguru import logger
 
+from danbooru import logger
 from danbooru.utils import BaseModel, classproperty
 
 if TYPE_CHECKING:
@@ -25,16 +25,6 @@ if TYPE_CHECKING:
     from danbooru.danbooru import Danbooru
 
 DanbooruModelType = TypeVar("DanbooruModelType", bound="DanbooruModel")
-
-
-class _DanbooruModelReturnsDict:
-    ...
-
-
-class _DanbooruModelWithId(BaseModel):
-    id: int
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
 
 
 class WrongIncludeCallError(Exception):
@@ -77,6 +67,7 @@ class DanbooruModel(BaseModel):
 
     def __getattribute__(self, name: str):
         """Override to skip validation for the response."""
+
         field: FieldInfo | None = super().__getattribute__("model_fields").get(name)
         value = super().__getattribute__(name)
 
@@ -101,9 +92,9 @@ class DanbooruModel(BaseModel):
         if self.__class__.__name__ in ("DanbooruModel", "DanbooruReportModel"):
             return self._response.url
 
-        url = f"{self._session.base_url}/{self.endpoint_name}"
+        url = f"{self._session.base_url}/{self.generic_endpoint}"
 
-        if isinstance(self, _DanbooruModelWithId):
+        if isinstance(self, DanbooruInstancedModel):
             return f"{url}/{self.id}"
 
         if (query := urlparse(self._request.url).query):
@@ -112,6 +103,9 @@ class DanbooruModel(BaseModel):
         return url
 
     def __repr__(self) -> str:
+        return f"{type(self).__name__}[{self.url}]"
+
+    def __str__(self) -> str:
         return f"{type(self).__name__}[{self.url}]"
 
     @classproperty
@@ -123,7 +117,7 @@ class DanbooruModel(BaseModel):
         return snake_name.removeprefix("danbooru_")
 
     @classproperty
-    def endpoint_name(self) -> str:
+    def generic_endpoint(self) -> str:
         """Autogenerates the endpoint name."""
         endpoint = self.model_name
         return inflection.pluralize(endpoint)
@@ -135,17 +129,17 @@ class DanbooruModel(BaseModel):
         if not kwargs.pop("session", None):
             session = get_default_session()
 
-        params = session._kwargs_to_rails_params(endpoint=cls.endpoint_name, **kwargs)  # noqa: SLF001
+        params = session._kwargs_to_rails_params(endpoint=cls.generic_endpoint, **kwargs)  # noqa: SLF001
         param_string = urlencode(params)
-        return f"{session.base_url}/{cls.endpoint_name}?{param_string}"
+        return f"{session.base_url}/{cls.generic_endpoint}?{param_string}"
 
     @overload
     @classmethod
-    def get(cls: type[_DanbooruModelReturnsDict], cache: bool = False, **kwargs) -> Self: ...  # noqa: FBT001, FBT002
+    def get(cls: type[DanbooruInstancedModel], cache: bool = False, **kwargs) -> list[Self]: ...  # noqa: FBT001, FBT002
 
     @overload
     @classmethod
-    def get(cls, cache: bool = False, **kwargs) -> list[Self]: ...  # noqa: FBT001, FBT002
+    def get(cls, cache: bool = False, **kwargs) -> Self: ...  # noqa: FBT001, FBT002
 
     @classmethod
     def get(cls, cache: bool = False, **kwargs) -> list[Self] | Self:  # noqa: FBT001, FBT002
@@ -153,7 +147,7 @@ class DanbooruModel(BaseModel):
         if not kwargs.pop("session", None):
             session = get_default_session()
 
-        response = session.danbooru_request("GET", cls.endpoint_name, cache=cache, **kwargs)
+        response = session.danbooru_request("GET", cls.generic_endpoint, cache=cache, **kwargs)
         return response  # type: ignore[return-value]
 
     @classmethod
@@ -171,14 +165,14 @@ class DanbooruModel(BaseModel):
         kwargs.pop("limit", None)
         page = 1
 
-        limit = 200 if cls.endpoint_name == "posts" else 1000
+        limit = 200 if cls.generic_endpoint == "posts" else 1000
 
         while True:
-            response = session.danbooru_request("GET", cls.endpoint_name, page=page, limit=limit, **kwargs)
+            response = session.danbooru_request("GET", cls.generic_endpoint, page=page, limit=limit, **kwargs)
             if response:
                 yield response
             if len(response) < limit:
-                logger.trace(f"Got {len(response)} (<{limit}) {cls.endpoint_name} on page {page}, stopping.")
+                logger.trace(f"Got {len(response)} (<{limit}) {cls.generic_endpoint} on page {page}, stopping.")
                 return
             page += 1
 
@@ -197,7 +191,7 @@ class DanbooruModel(BaseModel):
             if model == DanbooruModel:
                 continue
 
-            if model.endpoint_name == endpoint:  # type: ignore[attr-defined]
+            if model.generic_endpoint == endpoint:  # type: ignore[attr-defined]
                 return model
         return cls
 
@@ -211,19 +205,41 @@ class DanbooruModel(BaseModel):
     def __hash__(self):
         return hash(self.url)
 
+
+class DanbooruInstancedModel(DanbooruModel):
+    id: int
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+
     @classmethod
     def create(cls, **kwargs) -> Self:
-        """Create on danbooru and then return an object."""
-        if not issubclass(cls, _DanbooruModelWithId):
-            raise TypeError
-
+        """Create on danbooru and then return self."""
         if not kwargs.pop("session", None):
             session = get_default_session()
 
         data = {cls.model_name: kwargs}
 
-        response = session.danbooru_request("POST", cls.endpoint_name, json=data)
+        logger.info(f"Creating a {cls.model_name}...")
+        response = session.danbooru_request("POST", cls.generic_endpoint, json=data)
         return response
+
+    def update(self, **kwargs) -> Self:
+        """Update on danbooru and then return self."""
+        if not kwargs.pop("session", None):
+            session = get_default_session()
+
+        data = {self.model_name: kwargs}
+
+        pretty_json = ", ".join(f"{k}='{v}'" for k, v in kwargs.items())
+
+        logger.info(f"Updating {self} with params: {pretty_json}")
+        response = session.danbooru_request("PUT", self.instance_endpoint, json=data)
+        return response
+
+    @property
+    def instance_endpoint(self) -> str:
+        """Autogenerates the endpoint name."""
+        return f"{self.generic_endpoint}/{self.id}"
 
 
 g = {}

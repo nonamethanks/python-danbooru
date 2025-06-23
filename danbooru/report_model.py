@@ -20,7 +20,7 @@ class DanbooruReportModel(DanbooruModel):
         return f"{type(self).__name__}[{props}]"
 
     @classproperty
-    def endpoint_name(self) -> str:
+    def generic_endpoint(self) -> str:
         """Autogenerates the endpoint name."""
         endpoint = self.model_name.removesuffix("_report")
         endpoint = f"reports/{endpoint}"

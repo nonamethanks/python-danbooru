@@ -3,12 +3,12 @@
 import re
 from functools import cached_property
 
-from danbooru.model import DanbooruModel, _DanbooruModelWithId
+from danbooru.model import DanbooruInstancedModel
 from danbooru.models.tag_implication import DanbooruTagImplication
 from danbooru.models.wiki_page import DanbooruWikiPage
 
 
-class DanbooruTag(DanbooruModel, _DanbooruModelWithId):
+class DanbooruTag(DanbooruInstancedModel):
     name: str
     post_count: int
     category: int

@@ -6,14 +6,14 @@ from datetime import timedelta
 
 from backoff import expo, on_exception
 from dotenv import load_dotenv
-from loguru import logger
 from requests import Response, Session
 from requests.exceptions import JSONDecodeError, ReadTimeout
 from requests_cache import CachedResponse, CachedSession
 
+from danbooru import logger
 from danbooru.__version__ import package_version
 from danbooru.exceptions import EmptyResponseError, RetriableDanbooruError, raise_http_exception
-from danbooru.model import DanbooruModel, DanbooruModelType, _DanbooruModelReturnsDict
+from danbooru.model import DanbooruInstancedModel, DanbooruModel, DanbooruModelType
 
 load_dotenv()
 
@@ -98,7 +98,7 @@ class Danbooru:
             raise NotImplementedError(response.content) from e
 
         model = DanbooruModel.model_for_endpoint(endpoint)
-        if issubclass(model, _DanbooruModelReturnsDict) or response.request.method != "GET":
+        if not issubclass(model, DanbooruInstancedModel) or response.request.method != "GET":
             if not isinstance(data, dict):
                 msg = f"API returned unexpected type: {type(data)} => {data}"
                 raise TypeError(msg, model)
