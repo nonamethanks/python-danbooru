@@ -9,6 +9,6 @@ class DanbooruTagImplication(DanbooruModel, _DanbooruModelWithId):
     antecedent_name: str
     consequent_name: str
     status: str
-    forum_topic_id: int
     approver_id: int
     forum_post_id: int | None
+    forum_topic_id: int | None

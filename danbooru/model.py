@@ -211,6 +211,20 @@ class DanbooruModel(BaseModel):
     def __hash__(self):
         return hash(self.url)
 
+    @classmethod
+    def create(cls, **kwargs) -> Self:
+        """Create on danbooru and then return an object."""
+        if not issubclass(cls, _DanbooruModelWithId):
+            raise TypeError
+
+        if not kwargs.pop("session", None):
+            session = get_default_session()
+
+        data = {cls.model_name: kwargs}
+
+        response = session.danbooru_request("POST", cls.endpoint_name, json=data)
+        return response
+
 
 g = {}
 

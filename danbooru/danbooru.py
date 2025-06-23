@@ -98,7 +98,7 @@ class Danbooru:
             raise NotImplementedError(response.content) from e
 
         model = DanbooruModel.model_for_endpoint(endpoint)
-        if issubclass(model, _DanbooruModelReturnsDict):
+        if issubclass(model, _DanbooruModelReturnsDict) or response.request.method != "GET":
             if not isinstance(data, dict):
                 msg = f"API returned unexpected type: {type(data)} => {data}"
                 raise TypeError(msg, model)
