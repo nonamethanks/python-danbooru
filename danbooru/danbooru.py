@@ -15,6 +15,7 @@ from danbooru import logger
 from danbooru.__version__ import package_version
 from danbooru.exceptions import EmptyResponseError, RetriableDanbooruError, raise_http_exception
 from danbooru.model import DanbooruInstancedModel, DanbooruModel, DanbooruModelType
+from danbooru.report_model import DanbooruReportModel
 
 load_dotenv()
 
@@ -111,7 +112,7 @@ class Danbooru:
             raise NotImplementedError(response.content) from e
 
         model = DanbooruModel.model_for_endpoint(endpoint)
-        if not issubclass(model, DanbooruInstancedModel) or response.request.method != "GET":
+        if not issubclass(model, (DanbooruInstancedModel, DanbooruReportModel)) or response.request.method != "GET":
             if not isinstance(data, dict):
                 msg = f"API returned unexpected type: {type(data)} => {data}"
                 raise TypeError(msg, model)
