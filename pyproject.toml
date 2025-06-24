@@ -9,6 +9,7 @@ dependencies = [
     "inflection>=0.5.1",
     "loguru>=0.7.3",
     "pydantic>=2.11.5",
+    "pyrate-limiter>=3.7.1",
     "python-dotenv>=1.1.0",
     "requests>=2.32.3",
     "requests-cache>=1.2.1",

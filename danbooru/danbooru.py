@@ -6,9 +6,10 @@ from datetime import timedelta
 
 from backoff import expo, on_exception
 from dotenv import load_dotenv
+from pyrate_limiter import Duration, Limiter, Rate
 from requests import Response, Session
 from requests.exceptions import JSONDecodeError, ReadTimeout
-from requests_cache import CachedResponse, CachedSession
+from requests_cache import CachedSession
 
 from danbooru import logger
 from danbooru.__version__ import package_version
@@ -16,6 +17,10 @@ from danbooru.exceptions import EmptyResponseError, RetriableDanbooruError, rais
 from danbooru.model import DanbooruInstancedModel, DanbooruModel, DanbooruModelType
 
 load_dotenv()
+
+
+request_rate = Rate(1, Duration.SECOND)
+request_limiter = Limiter(request_rate, max_delay=10_000)
 
 
 class Danbooru:
@@ -72,20 +77,28 @@ class Danbooru:
 
         endpoint_url = f"{self.base_url}/{endpoint}".strip("/")
 
-        if cache:
-            response = self._cache_session.request(method, endpoint_url, **kwargs)
-        else:
-            response = self._session.request(method, endpoint_url, **kwargs)
-
-        if isinstance(response, CachedResponse) and response.from_cache:
-            self.logger.trace(f"Retrieved cached {method} request for {response.request.url}")
-        else:
-            self.logger.trace(f"Performed {method} request for {response.request.url}")
+        response = self._do_request(method, endpoint_url, cache, **kwargs)
 
         if not response.ok:
             raise_http_exception(response)
 
         return self._parse_response(response, endpoint)
+
+    def _do_request(self, method: str, endpoint_url: str, cache: bool, **kwargs) -> Response:  # noqa: FBT001
+        if cache:
+            response = self._cache_session.request(method, endpoint_url, only_if_cached=True, **kwargs)
+
+        if not cache or (cache and response.status_code == 504):  # noqa: PLR2004
+            request_limiter.try_acquire("request")
+            if cache:
+                response = self._cache_session.request(method, endpoint_url, **kwargs)
+            else:
+                response = self._session.request(method, endpoint_url, **kwargs)
+            self.logger.trace(f"Performed {method} request for {response.request.url}")
+        else:
+            self.logger.trace(f"Retrieved cached {method} request for {response.request.url}")
+
+        return response
 
     def _parse_response(self, response: Response, endpoint: str) -> list[DanbooruModelType] | list[DanbooruModel] | DanbooruModelType:
         try:
