@@ -14,6 +14,7 @@ from urllib.parse import parse_qs, urlencode, urlparse
 import inflection
 
 from danbooru import logger
+from danbooru.exceptions import EmptyResponseError
 from danbooru.utils import BaseModel, classproperty
 
 if TYPE_CHECKING:
@@ -223,7 +224,7 @@ class DanbooruInstancedModel(DanbooruModel):
         response = session.danbooru_request("POST", cls.generic_endpoint, json=data)
         return response
 
-    def update(self, **kwargs) -> Self:
+    def update(self, **kwargs) -> Self | None:
         """Update on danbooru and then return self."""
         if not kwargs.pop("session", None):
             session = get_default_session()
@@ -233,8 +234,11 @@ class DanbooruInstancedModel(DanbooruModel):
         pretty_json = ", ".join(f"{k}='{v}'" for k, v in kwargs.items())
 
         logger.info(f"Updating {self} with params: {pretty_json}")
-        response = session.danbooru_request("PUT", self.instance_endpoint, json=data)
-        return response
+
+        try:
+            return session.danbooru_request("PUT", self.instance_endpoint, json=data)
+        except EmptyResponseError:
+            return None
 
     @property
     def instance_endpoint(self) -> str:

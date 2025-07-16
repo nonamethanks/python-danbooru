@@ -63,6 +63,10 @@ class DanbooruHTTPError(Exception):
         return msg
 
 
+class EmptyResponseError(DanbooruHTTPError):
+    """The response was empty, but the request was successful."""
+
+
 class RetriableDanbooruError(DanbooruHTTPError):
     """An error that can be retried."""
 
@@ -77,7 +81,3 @@ class DanbooruTimeoutError(RetriableDanbooruError):
 
 class CloudflareError(RetriableDanbooruError):
     """Generic Cloudflare error."""
-
-
-class EmptyResponseError(RetriableDanbooruError):
-    """The response was empty, but the request was successful."""

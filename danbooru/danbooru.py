@@ -1,6 +1,7 @@
 """Base session used throughout the module."""
 
 
+import logging
 import os
 from datetime import timedelta
 
@@ -19,6 +20,8 @@ from danbooru.report_model import DanbooruReportModel
 
 load_dotenv()
 
+logging.getLogger("backoff").addHandler(logging.StreamHandler())
+logging.getLogger("backoff").setLevel(logging.ERROR)
 
 request_rate = Rate(1, Duration.SECOND)
 request_limiter = Limiter(request_rate, max_delay=10_000)

@@ -45,6 +45,8 @@ ignore = [
 
     "RET504", # Unnecessary assignment to `response` before `return` statement
     "RET505", # Unnecessary `else` after `return` statement
+
+    "SIM105", # try-except-pass
 ]
 
 [tool.ruff.lint.flake8-type-checking]
