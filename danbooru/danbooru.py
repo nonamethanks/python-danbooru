@@ -5,7 +5,7 @@ import logging
 import os
 from datetime import timedelta
 
-from backoff import expo, on_exception
+from backoff import constant, expo, on_exception
 from dotenv import load_dotenv
 from pyrate_limiter import Duration, Limiter, Rate
 from requests import Response, Session
@@ -14,7 +14,7 @@ from requests_cache import CachedSession
 
 from danbooru import logger
 from danbooru.__version__ import package_version
-from danbooru.exceptions import EmptyResponseError, RetriableDanbooruError, raise_http_exception
+from danbooru.exceptions import DanbooruRateLimitError, EmptyResponseError, RetriableDanbooruError, raise_http_exception
 from danbooru.model import DanbooruInstancedModel, DanbooruModel, DanbooruModelType
 from danbooru.report_model import DanbooruReportModel
 
@@ -25,6 +25,13 @@ logging.getLogger("backoff").setLevel(logging.ERROR)
 
 request_rate = Rate(1, Duration.SECOND)
 request_limiter = Limiter(request_rate, max_delay=10_000)
+
+
+def backoff_handler(details: dict) -> None:
+    """Handler for backoff function."""
+    logger.error("Backing off {wait:0.1f} seconds after {tries} tries "
+                 "calling function {target} with args {args} and kwargs "
+                 "{kwargs}".format(**details))
 
 
 class Danbooru:
@@ -61,7 +68,8 @@ class Danbooru:
         self._session.headers = headers
         self._cache_session.headers = headers
 
-    @on_exception(expo, (ReadTimeout, RetriableDanbooruError), max_tries=5)
+    @on_exception(expo, (ReadTimeout, RetriableDanbooruError), max_tries=5, jitter=None, on_backoff=backoff_handler)
+    @on_exception(constant, (DanbooruRateLimitError), max_tries=5, jitter=None, interval=60, on_backoff=backoff_handler)
     def danbooru_request(self,
                          method: str,
                          endpoint: str,

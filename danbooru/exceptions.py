@@ -30,6 +30,9 @@ def raise_http_exception(response: requests.Response) -> None:
         if error_type == "ActiveRecord::QueryCanceled":
             raise DanbooruTimeoutError(response, error_type=error_type, error_message=error_message, backtrace=backtrace)
 
+        if error_type == "RateLimiter::RateLimitError":
+            raise DanbooruRateLimitError(response, error_type=error_type, error_message=error_message, backtrace=backtrace)
+
         raise DanbooruHTTPError(response, error_type=error_type, error_message=error_message, backtrace=backtrace)
 
 
@@ -77,6 +80,10 @@ class DownbooruError(RetriableDanbooruError):
 
 class DanbooruTimeoutError(RetriableDanbooruError):
     """Your query took too long."""
+
+
+class DanbooruRateLimitError(RetriableDanbooruError):
+    """You're getting ratelimited."""
 
 
 class CloudflareError(RetriableDanbooruError):
