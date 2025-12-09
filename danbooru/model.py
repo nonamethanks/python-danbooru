@@ -70,14 +70,13 @@ class DanbooruModel(BaseModel):
         """Override to skip validation for the response."""
 
         field: FieldInfo | None = super().__getattribute__("model_fields").get(name)
-
-        if field.annotation is type(None):  # this is a parameter that's nulled in a subclass
-            return None
-
         value = super().__getattribute__(name)
 
         if not field:
             return value
+
+        if field.annotation is type(None):  # this is a parameter that's nulled in a subclass
+            return None
 
         # if an include is defined like param: type | None = None, and is null, we fetch it as needed
         if not field.is_required() and value is None:
