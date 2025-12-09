@@ -152,9 +152,17 @@ class DanbooruModel(BaseModel):
         return response  # type: ignore[return-value]
 
     @classmethod
-    def get_all(cls, **kwargs) -> list[Self]:
+    def get_all(cls, max_pages: int = 0, **kwargs) -> list[Self]:
         """Get all elements for a specific search. Accepts an optional `session` param."""
-        return [m for p in cls.all_pages(**kwargs) for m in p]
+        all_results = []
+
+        for current_page, page_of_results in enumerate(cls.all_pages(**kwargs)):
+            all_results += page_of_results
+
+            if max_pages and current_page + 1 >= max_pages:
+                break
+
+        return all_results
 
     @classmethod
     def all_pages(cls, **kwargs) -> Generator[list[Self], None, None]:
