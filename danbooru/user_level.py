@@ -27,22 +27,28 @@ class UserLevel(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def validate_model(cls, value: int | str | dict | UserLevel) -> dict:
+    def validate_model(cls, level: int | str | dict | UserLevel) -> dict:
         """Validate that the level is valid."""
-        if isinstance(value, str):
-            name = value.upper()
+        if isinstance(level, dict):
+            try:
+                level = level.get("level")
+            except KeyError as e:
+                raise NotImplementedError(level) from e
+
+        if isinstance(level, str):
+            name = level.upper()
             number = cls.number_from_name(name)
 
-        elif isinstance(value, int):
-            number = value
+        elif isinstance(level, int):
+            number = level
             name = cls.name_from_number(number)
 
-        elif isinstance(value, UserLevel):
-            name = value.name
-            number = value.number
+        elif isinstance(level, UserLevel):
+            name = level.name
+            number = level.number
 
         else:
-            e = f"{value} ({type(value)}): not an acceptable value."
+            e = f"{level} ({type(level)}): not an acceptable value."
             raise TypeError(e)
 
         return {"number": number, "name": name}
@@ -82,19 +88,19 @@ class UserLevel(BaseModel):
             return number
 
     def __lt__(self, level: int | UserLevel | str) -> bool:
-        return self.number < UserLevel(level).number
+        return self.number < UserLevel(level=level).number
 
     def __le__(self, level: int | UserLevel | str) -> bool:
-        return self.number <= UserLevel(level).number
+        return self.number <= UserLevel(level=level).number
 
     def __gt__(self, level: int | UserLevel | str) -> bool:
-        return self.number > UserLevel(level).number
+        return self.number > UserLevel(level=level).number
 
     def __ge__(self, level: int | UserLevel | str) -> bool:
-        return self.number >= UserLevel(level).number
+        return self.number >= UserLevel(level=level).number
 
     def __eq__(self, level: int | UserLevel | str) -> bool:
-        return self.number == UserLevel(level).number
+        return self.number == UserLevel(level=level).number
 
     def __repr__(self) -> str:
         return f"UserLevel[{self.name}]"
