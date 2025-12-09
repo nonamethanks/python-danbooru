@@ -74,3 +74,7 @@ addopts = "-raP --showlocals -vv "
     "D",       # docstrings
     "PLR2004", # magic value
 ]
+
+[tool.ruff.pep8-naming]
+# Allow Pydantic's `@validator` decorator to trigger class method treatment.
+classmethod-decorators = ["classmethod", "pydantic.field_validator"]
