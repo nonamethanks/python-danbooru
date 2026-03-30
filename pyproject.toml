@@ -33,7 +33,7 @@ ignore = [
     "ANN003", # Missing type annotation for `**kwargs`
     "ANN204", # Missing return type annotation for special method `__init__`
     "ANN401", # Dynamically typed expressions (typing.Any) are disallowed
-
+    "EM102",
     "FBT",
 
     "D101", # Missing docstring in public class
@@ -49,6 +49,8 @@ ignore = [
     "RET505", # Unnecessary `else` after `return` statement
 
     "SIM105", # try-except-pass
+
+    "TRY003",
 ]
 
 [tool.ruff.lint.flake8-type-checking]
