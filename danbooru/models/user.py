@@ -9,8 +9,15 @@ from danbooru.user_level import UserLevel
 class DanbooruUser(DanbooruInstancedModel):
     name: str
     level: UserLevel
-    updated_at: datetime.datetime | None = None
+    post_upload_count: int
+    post_update_count: int
+    note_update_count: int
+    is_deleted: bool
+    is_banned: bool
 
+    updated_at: datetime.datetime | None = None  # not present
+
+    # only present on /users/:id, not on index
     wiki_page_version_count: int | None = None
     artist_version_count: int | None = None
     artist_commentary_version_count: int | None = None
