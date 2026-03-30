@@ -20,3 +20,11 @@ class DanbooruPostVersion(DanbooruInstancedModel):
         if isinstance(v, str):
             return v.split()
         return v
+
+    @field_validator("added_tags", "removed_tags", "obsolete_added_tags", "obsolete_removed_tags", mode="before")
+    @classmethod
+    def filter_null_tags(cls, v):  # noqa: ANN001, ANN206
+        """https://github.com/danbooru/danbooru/issues/6365."""
+        if isinstance(v, list):
+            return [item for item in v if item is not None]
+        return v
