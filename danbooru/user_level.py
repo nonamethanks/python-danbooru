@@ -33,41 +33,45 @@ class UserLevel(BaseModel):
 
     @model_serializer
     def serializer(self) -> int:
-        """Serialize the level."""
+        """Serialize the level as an int for DB and Peewee. Accepts both UserLevel and int."""
+        # If self is already an int (shouldn't happen, but for robustness)
+        if isinstance(self, int):
+            return self
+        # Normal case: UserLevel instance
         return self.number
 
     @model_validator(mode="before")
     @classmethod
     def validate_model(cls, level: int | str | dict | UserLevel) -> dict:
         """Validate that the level is valid."""
+        # Accept dicts with "number" and "name" keys (from model_dump)
         if isinstance(level, dict):
-            # Accept dicts with "number" and "name" keys (from model_dump)
             if "number" in level and "name" in level:
                 return {"number": level["number"], "name": level["name"]}
-            # Accept dicts with a "level" key (also model dump)
             if "level" in level:
                 level = level["level"]
             else:
                 e = f"{level} ({type(level)}): not an acceptable value."
                 raise TypeError(e)
 
+        # Accept int directly
+        if isinstance(level, int):
+            number = level
+            name = cls.name_from_number(number)
+            return {"number": number, "name": name}
+
+        # Accept str directly
         if isinstance(level, str):
             name = level.upper()
             number = cls.number_from_name(name)
+            return {"number": number, "name": name}
 
-        elif isinstance(level, int):
-            number = level
-            name = cls.name_from_number(number)
+        # Accept UserLevel directly
+        if isinstance(level, UserLevel):
+            return {"number": level.number, "name": level.name}
 
-        elif isinstance(level, UserLevel):
-            name = level.name
-            number = level.number
-
-        else:
-            e = f"{level} ({type(level)}): not an acceptable value."
-            raise TypeError(e)
-
-        return {"number": number, "name": name}
+        e = f"{level} ({type(level)}): not an acceptable value."
+        raise TypeError(e)
 
     @staticmethod
     def name_from_number(number: int) -> str:
