@@ -34,6 +34,8 @@ ignore = [
     "ANN204", # Missing return type annotation for special method `__init__`
     "ANN401", # Dynamically typed expressions (typing.Any) are disallowed
 
+    "FBT",
+
     "D101", # Missing docstring in public class
     "D105", # Missing docstring in magic method
     "D106", # Missing docstring in public nested class

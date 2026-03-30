@@ -68,8 +68,6 @@ class Danbooru:
         self._session.headers = headers
         self._cache_session.headers = headers
 
-    @on_exception(expo, (ReadTimeout, RetriableDanbooruError), max_tries=5, jitter=None, on_backoff=backoff_handler)
-    @on_exception(constant, (DanbooruRateLimitError), max_tries=5, jitter=None, interval=60, on_backoff=backoff_handler)
     def danbooru_request(self,
                          method: str,
                          endpoint: str,
@@ -87,16 +85,14 @@ class Danbooru:
             kwargs = self._kwargs_to_rails_params(endpoint=endpoint, **kwargs)
             kwargs = {"params": kwargs}
 
-        endpoint_url = f"{self.base_url}/{endpoint}".strip("/")
-
-        response = self._do_request(method, endpoint_url, cache, **kwargs)
-
-        if not response.ok:
-            raise_http_exception(response)
-
+        response = self._do_request(method, endpoint, cache, **kwargs)
         return self._parse_response(response, endpoint)
 
-    def _do_request(self, method: str, endpoint_url: str, cache: bool, **kwargs) -> Response:  # noqa: FBT001
+    @on_exception(expo, (ReadTimeout, RetriableDanbooruError), max_tries=5, jitter=None, on_backoff=backoff_handler)
+    @on_exception(constant, (DanbooruRateLimitError), max_tries=5, jitter=None, interval=60, on_backoff=backoff_handler)
+    def _do_request(self, method: str, endpoint: str, cache: bool, **kwargs) -> Response:  # noqa: FBT001
+        endpoint_url = f"{self.base_url}/{endpoint}".strip("/")
+
         if cache:
             response = self._cache_session.request(method, endpoint_url, only_if_cached=True, **kwargs)
 
@@ -109,6 +105,9 @@ class Danbooru:
             self.logger.trace(f"Performed {method} request for {response.request.url}")
         else:
             self.logger.trace(f"Retrieved cached {method} request for {response.request.url}")
+
+        if not response.ok:
+            raise_http_exception(response)
 
         return response
 
@@ -169,13 +168,16 @@ class Danbooru:
             if n_p := kwargs.pop(named_parameter, None):
                 params[named_parameter] = n_p
 
-        for _key, _value in kwargs.items():
-            if _key == "tags" and endpoint in ["posts", "counts/posts"]:
-                params[_key] = _value
+        for key, value in kwargs.items():
+            if key == "tags" and endpoint in ["posts", "counts/posts"]:
+                params[key] = value
+                continue
+            if key.startswith("_"):  # bypass mechanism
+                params[key.strip("_")] = value
                 continue
 
-            parsed_key = f"search[{_key}]"
-            for extra_key, parsed_value in cls._parse_to_include(_value):
+            parsed_key = f"search[{key}]"
+            for extra_key, parsed_value in cls._parse_to_include(value):
                 params[parsed_key + extra_key] = parsed_value
         return params
 

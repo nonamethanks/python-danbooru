@@ -41,9 +41,16 @@ _parent_data = ContextVar("_parent_data")
 class DanbooruModel(BaseModel):
     def __init__(self, *, response: Response | None = None, session: Danbooru | None = None, **data):
         """Declare a generic Danbooru model as fallback in case the specific ones aren't defined."""
+        try:
+            parent_data = _parent_data.get()
+        except LookupError as e:
+            if not session or not response:
+                e.add_note(">[danbooru-api]: Must pass a response to this object if monkeypatching. You should never see this error")
+                raise
 
-        with self._bind({"session": session or _parent_data.get().get("session"),
-                         "response": response or _parent_data.get().get("response")}):
+        with self._bind({"session": session or parent_data.get("session"),
+                         "response": response or parent_data.get("response")}):
+
             session = session or _parent_data.get().get("session")
             response = response or _parent_data.get().get("response")
             super().__init__(**data, response=response, session=session)
@@ -70,6 +77,7 @@ class DanbooruModel(BaseModel):
         """Override to skip validation for the response."""
 
         field: FieldInfo | None = super().__getattribute__("model_fields").get(name)
+
         value = super().__getattribute__(name)
 
         if not field:
@@ -84,8 +92,7 @@ class DanbooruModel(BaseModel):
             params = parse_qs(urlparse(request.url).query).get("only", [])
             if params:
                 params = params[0].split(",")
-            params = params or super().__getattribute__("default_includes")
-
+            params = params or super().__getattribute__("default_includes")()
             if name not in params:
                 raise WrongIncludeCallError(name)
 

@@ -13,3 +13,5 @@ wheels/
 .env
 
 http_cache.sqlite
+
+test.py
