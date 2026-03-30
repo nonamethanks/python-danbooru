@@ -31,6 +31,11 @@ class UserLevel(BaseModel):
         else:
             super().__init__(**data)
 
+    @model_serializer
+    def serializer(self) -> int:
+        """Serialize the level."""
+        return self.number
+
     @model_validator(mode="before")
     @classmethod
     def validate_model(cls, level: int | str | dict | UserLevel) -> dict:
