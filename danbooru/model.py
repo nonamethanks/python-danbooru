@@ -259,6 +259,10 @@ class DanbooruInstancedModel(DanbooruModel):
         except EmptyResponseError:
             return None
 
+    def delete(self) -> None:
+        logger.info(f"Deleting {self}")
+        self.session._do_request("DELETE", self.instance_endpoint, cache=False)
+
     @property
     def instance_endpoint(self) -> str:
         """Autogenerates the endpoint name."""

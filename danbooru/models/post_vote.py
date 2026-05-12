@@ -7,4 +7,5 @@ from danbooru.model import DanbooruInstancedModel
 
 
 class DanbooruPostVote(DanbooruInstancedModel):
-    ...
+    post_id: int
+    user_id: int
