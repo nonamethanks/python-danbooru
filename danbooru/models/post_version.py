@@ -28,3 +28,13 @@ class DanbooruPostVersion(DanbooruInstancedModel):
         if isinstance(v, list):
             return [item for item in v if item is not None]
         return v
+
+    @property
+    def url(self) -> str:
+        return f"{self._session.base_url}/post_versions?search[post_id]={self.post_id}#post-version-{self.id}"
+
+    @property
+    def is_reverted(self) -> bool:
+        actual_added = [t for t in self.added_tags if t not in self.obsolete_added_tags]
+        actual_removed = [t for t in self.removed_tags if t not in self.obsolete_removed_tags]
+        return not actual_added and not actual_removed

@@ -115,10 +115,10 @@ class DanbooruModel(BaseModel):
         return url
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}[{self.url}]"
+        return f"{type(self).__name__}[ {self.url} ]"
 
     def __str__(self) -> str:
-        return f"{type(self).__name__}[{self.url}]"
+        return f"{type(self).__name__}[ {self.url} ]"
 
     @classproperty
     def model_name(self) -> str:
@@ -256,6 +256,25 @@ class DanbooruInstancedModel(DanbooruModel):
 
         try:
             return session.danbooru_request("PUT", self.instance_endpoint, json=data)
+        except EmptyResponseError:
+            return None
+
+    @classmethod
+    def update_instance(cls, id: int, **kwargs) -> Self | None:
+        """Update on danbooru and then return self."""
+        if not kwargs.pop("session", None):
+            session = get_default_session()
+
+        data = {cls.model_name: kwargs}
+
+        pretty_json = ", ".join(f"{k}='{v}'" for k, v in kwargs.items())
+
+        instance_url = f"{cls.generic_endpoint}/{id}"
+
+        logger.info(f"Updating {instance_url} with params: {pretty_json}")
+
+        try:
+            return session.danbooru_request("PUT", instance_url, json=data)
         except EmptyResponseError:
             return None
 
