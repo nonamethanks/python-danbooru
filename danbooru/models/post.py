@@ -3,8 +3,11 @@
 
 from __future__ import annotations
 
+import time
 from typing import Self
 
+from danbooru import logger
+from danbooru.exceptions import DanbooruHTTPError
 from danbooru.model import DanbooruInstancedModel
 
 
@@ -24,3 +27,23 @@ class DanbooruPost(DanbooruInstancedModel):
             "old_tag_string": "",
         }
         return self.update(**data)
+
+    @classmethod
+    def expunge(cls, post_id: int) -> None:
+        from danbooru.danbooru import Danbooru
+        session = Danbooru()
+        assert post_id > 11_000_000
+        logger.info(f"Permanently expunging post #{post_id}")
+        try:
+            session.danbooru_request(
+                "POST",
+                f"moderator/post/posts/{post_id}/expunge",
+                params={"post_id": post_id},
+            )
+        except DanbooruHTTPError as e:
+            if e.response.status_code == 406:
+                return
+            if e.response.status_code == 500:
+                time.sleep(5)
+            else:
+                raise
