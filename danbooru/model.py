@@ -145,22 +145,33 @@ class DanbooruModel(BaseModel):
         param_string = urlencode(params)
         return f"{session.base_url}/{cls.generic_endpoint}?{param_string}"
 
-    @overload
     @classmethod
-    def get(cls: type[DanbooruInstancedModel], cache: bool = False, **kwargs) -> list[Self]: ...  # noqa: FBT001, FBT002
+    def get_by_id(cls, model_id: int, cache: bool = False, **kwargs) -> list[Self] | Self:
+        """Gets a specific instance of the model matching the ID."""
+        if not kwargs.pop("session", None):
+            session = get_default_session()
+
+        endpoint = f"{cls.generic_endpoint}/{model_id}"
+
+        response = session.danbooru_request("GET", endpoint, cache=cache, **kwargs)
+        return response # ty:ignore[invalid-return-type]
 
     @overload
     @classmethod
-    def get(cls, cache: bool = False, **kwargs) -> Self: ...  # noqa: FBT001, FBT002
+    def get(cls: type[DanbooruInstancedModel], cache: bool = False, **kwargs) -> list[Self]: ...
+
+    @overload
+    @classmethod
+    def get(cls, cache: bool = False, **kwargs) -> Self: ...
 
     @classmethod
-    def get(cls, cache: bool = False, **kwargs) -> list[Self] | Self:  # noqa: FBT001, FBT002
+    def get(cls, cache: bool = False, **kwargs) -> list[Self] | Self:
         """Proxy for `Danbooru().danbooru_request("GET", endpoint, **kwargs)`. Accepts an optional `session` param."""
         if not kwargs.pop("session", None):
             session = get_default_session()
 
         response = session.danbooru_request("GET", cls.generic_endpoint, cache=cache, **kwargs)
-        return response  # type: ignore[return-value]
+        return response # ty:ignore[invalid-return-type]
 
     @classmethod
     def get_all(cls, max_pages: int = 0, **kwargs) -> list[Self]:
