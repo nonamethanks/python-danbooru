@@ -9,7 +9,7 @@ dependencies = [
     "inflection>=0.5.1",
     "loguru>=0.7.3",
     "pydantic>=2.11.5",
-    "pyrate-limiter>=3.7.1",
+    "pyrate-limiter>=3.7.1,<4.0.0",
     "python-dotenv>=1.1.0",
     "requests>=2.32.3",
     "requests-cache>=1.2.1",
@@ -44,7 +44,7 @@ ignore = [
     "D401", # First line of docstring should be in imperative mood
 
     "N801", # Class name should use CapWords convention
-    
+
     "PLR2004", # Constants
 
     "RET504", # Unnecessary assignment to `response` before `return` statement
