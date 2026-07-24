@@ -5,6 +5,7 @@ from danbooru.models.bulk_update_request import DanbooruBulkUpdateRequest
 from danbooru.models.comment import DanbooruComment
 from danbooru.models.comment_vote import DanbooruCommentVote
 from danbooru.models.forum_post import DanbooruForumPost
+from danbooru.models.pool import DanbooruPool
 from danbooru.models.post import DanbooruPost
 from danbooru.models.post_counts import DanbooruPostCounts
 from danbooru.models.post_version import DanbooruPostVersion
@@ -22,6 +23,7 @@ _models = [
     DanbooruComment,
     DanbooruCommentVote,
     DanbooruForumPost,
+    DanbooruPool,
     DanbooruPost,
     DanbooruPostCounts,
     DanbooruPostVersion,
