@@ -71,7 +71,7 @@ class Danbooru:
     def danbooru_request(self,
                          method: str,
                          endpoint: str,
-                         cache: bool = False,  # noqa: FBT001, FBT002
+                         cache: bool = False,
                          **kwargs,
                          ) -> list[DanbooruModelType] | list[DanbooruModel] | DanbooruModelType:
         """
@@ -90,13 +90,17 @@ class Danbooru:
 
     @on_exception(expo, (ReadTimeout, RetriableDanbooruError), max_tries=5, jitter=None, on_backoff=backoff_handler)
     @on_exception(constant, (DanbooruRateLimitError), max_tries=5, jitter=None, interval=60, on_backoff=backoff_handler)
-    def _do_request(self, method: str, endpoint: str, cache: bool, **kwargs) -> Response:  # noqa: FBT001
-        endpoint_url = f"{self.base_url}/{endpoint}".strip("/")
+    def _do_request(self, method: str, endpoint: str, cache: bool, **kwargs) -> Response:
+
+        if  endpoint.startswith("http"):  # noqa: SIM108
+            endpoint_url = endpoint
+        else:
+            endpoint_url = f"{self.base_url}/{endpoint}".strip("/")
 
         if cache:
             response = self._cache_session.request(method, endpoint_url, only_if_cached=True, **kwargs)
 
-        if not cache or (cache and response.status_code == 504):  # noqa: PLR2004
+        if not cache or (cache and response.status_code == 504):
             request_limiter.try_acquire("request")
             if cache:
                 response = self._cache_session.request(method, endpoint_url, **kwargs)

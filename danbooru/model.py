@@ -145,6 +145,17 @@ class DanbooruModel(BaseModel):
         param_string = urlencode(params)
         return f"{session.base_url}/{cls.generic_endpoint}?{param_string}"
 
+
+    @classmethod
+    def from_url(cls, url: str, cache: bool = False, **kwargs) -> str:
+        """Return the model instance from a url."""
+
+        if not kwargs.pop("session", None):
+            session = get_default_session()
+
+        response = session.danbooru_request("GET", url, cache=cache, **kwargs)
+        return response # ty:ignore[invalid-return-type]
+
     @classmethod
     def get_by_id(cls, model_id: int, cache: bool = False, **kwargs) -> list[Self] | Self:
         """Gets a specific instance of the model matching the ID."""
