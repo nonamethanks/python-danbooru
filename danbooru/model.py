@@ -147,7 +147,7 @@ class DanbooruModel(BaseModel):
 
 
     @classmethod
-    def from_url(cls, url: str, cache: bool = False, **kwargs) -> str:
+    def from_url(cls, url: str, cache: bool = False, **kwargs) -> Self:
         """Return the model instance from a url."""
 
         if not kwargs.pop("session", None):
