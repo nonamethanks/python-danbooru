@@ -1,7 +1,7 @@
 {
     "recommendations": [
         "ms-python.autopep8",
-        "matangover.mypy",
-        "charliermarsh.ruff"
+        "charliermarsh.ruff",
+        "astral-sh.ty"
     ]
 }
