@@ -6,6 +6,7 @@ Uses pydantic for validation.
 from __future__ import annotations
 
 import datetime
+import re
 from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import TYPE_CHECKING, Self, TypeVar, overload
@@ -152,6 +153,15 @@ class DanbooruModel(BaseModel):
 
         if not kwargs.pop("session", None):
             session = get_default_session()
+
+        match = re.match(r"^https?://[^/]+/(?P<path>(?P<type>[a-z_]+)/(?P<id>\d+))", url)
+        if match:
+            expected_type = match.group("type")
+            if expected_type != cls.generic_endpoint:
+                raise ValueError(f"Submitted instance of `{expected_type}`, expected instance of `{cls.generic_endpoint}`.")
+        else:
+            raise ValueError(f"{url} is not a valid danbooru object.")
+
 
         response = session.danbooru_request("GET", url, cache=cache, **kwargs)
         return response # ty:ignore[invalid-return-type]
