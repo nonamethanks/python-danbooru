@@ -4,6 +4,7 @@ from danbooru.models.artist_version import DanbooruArtistVersion
 from danbooru.models.bulk_update_request import DanbooruBulkUpdateRequest
 from danbooru.models.comment import DanbooruComment
 from danbooru.models.comment_vote import DanbooruCommentVote
+from danbooru.models.favorite_group import DanbooruFavoriteGroup
 from danbooru.models.forum_post import DanbooruForumPost
 from danbooru.models.pool import DanbooruPool
 from danbooru.models.post import DanbooruPost
@@ -22,6 +23,7 @@ _models = [
     DanbooruBulkUpdateRequest,
     DanbooruComment,
     DanbooruCommentVote,
+    DanbooruFavoriteGroup,
     DanbooruForumPost,
     DanbooruPool,
     DanbooruPost,
