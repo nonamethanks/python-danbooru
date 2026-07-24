@@ -1,5 +1,4 @@
 """Defines the danbooru models individually."""
-
 from danbooru.models.artist_version import DanbooruArtistVersion
 from danbooru.models.bulk_update_request import DanbooruBulkUpdateRequest
 from danbooru.models.comment import DanbooruComment
@@ -8,6 +7,7 @@ from danbooru.models.favorite_group import DanbooruFavoriteGroup
 from danbooru.models.forum_post import DanbooruForumPost
 from danbooru.models.pool import DanbooruPool
 from danbooru.models.post import DanbooruPost
+from danbooru.models.post_approval import DanbooruPostApproval
 from danbooru.models.post_counts import DanbooruPostCounts
 from danbooru.models.post_version import DanbooruPostVersion
 from danbooru.models.post_vote import DanbooruPostVote
@@ -27,6 +27,7 @@ _models = [
     DanbooruForumPost,
     DanbooruPool,
     DanbooruPost,
+    DanbooruPostApproval,
     DanbooruPostCounts,
     DanbooruPostVersion,
     DanbooruPostVote,
